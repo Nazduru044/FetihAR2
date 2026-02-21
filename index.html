@@ -9,12 +9,11 @@
     <style>
         body { margin: 0; overflow: hidden; font-family: sans-serif; background-color: #000; }
         
-        /* MindAR'ın kendi yükleme ve tarama dairelerini zorla gizliyoruz */
+        /* Daireyi (scanning/loading) gizleyen CSS */
         .mindar-ui-loading, .mindar-ui-scanning, .mindar-ui-compatibility {
             display: none !important;
         }
 
-        /* Başlat Ekranı Tasarımı */
         #ui-container {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: #000; display: flex; flex-direction: column;
@@ -23,16 +22,16 @@
         #startButton {
             padding: 15px 40px; background-color: #d32f2f; color: #fff;
             border: none; border-radius: 50px; font-size: 20px; font-weight: bold;
-            cursor: pointer; box-shadow: 0 5px 15px rgba(211, 47, 47, 0.4);
+            cursor: pointer;
         }
-        p { color: #fff; text-align: center; margin-top: 15px; font-size: 14px; }
+        #status-text { color: #fff; margin-top: 15px; font-size: 14px; text-align: center; }
     </style>
 </head>
 <body>
 
     <div id="ui-container">
         <button id="startButton">KAMERAYI AÇ VE BAŞLAT</button>
-        <p>Lütfen bekleyin ve kamerayı resme tutun.</p>
+        <p id="status-text">Lütfen butona tıklayın.</p>
     </div>
 
     <a-scene 
@@ -44,41 +43,65 @@
         loading-screen="enabled: false">
         
         <a-assets>
-            <video id="fethiVideo" src="./yeni_klasor/video_2.mp4" preload="auto" loop crossorigin="anonymous" playsinline></video>
+            <video id="fethiVideo" src="./yeni_klasor/video_2.mp4" preload="auto" loop crossorigin="anonymous" playsinline webkit-playsinline></video>
             <audio id="fethiMuzik" src="./yeni_klasor/muzik.mp3" preload="auto" loop crossorigin="anonymous"></audio>
         </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
         <a-entity mindar-image-target="targetIndex: 0" id="imageTarget">
-            <a-video src="#fethiVideo" position="0 0 0" height="1" width="1.6" rotation="0 0 0"></a-video>
+            <a-video src="#fethiVideo" position="0 0 0" height="1" width="1.6"></a-video>
         </a-entity>
     </a-scene>
 
     <script>
         const uiContainer = document.getElementById('ui-container');
         const startButton = document.getElementById('startButton');
+        const statusText = document.getElementById('status-text');
         const video = document.getElementById('fethiVideo');
         const audio = document.getElementById('fethiMuzik');
         const imageTarget = document.getElementById('imageTarget');
 
+        // Başlangıçta her şeyin durduğundan emin olalım
+        video.pause();
+        audio.pause();
+
         startButton.addEventListener('click', () => {
             uiContainer.style.display = 'none';
-            // Mobil tarayıcılar için ses ve video kilidini açıyoruz
-            video.play().then(() => { video.pause(); });
-            audio.play().then(() => { audio.pause(); });
+            
+            // Tarayıcının ses engellemesini aşmak için sessizce bir kez tetikliyoruz
+            video.muted = true;
+            video.play().then(() => {
+                video.pause();
+                video.muted = false; // Kullanıcı artık izin verdiği için sesi açabiliriz
+            });
+
+            audio.muted = true;
+            audio.play().then(() => {
+                audio.pause();
+                audio.muted = false;
+            });
+            
+            console.log("Sistem hazır, resim bekleniyor...");
         });
 
+        // Resim algılandığında
         imageTarget.addEventListener('targetFound', () => {
-            console.log("Resim bulundu!");
+            console.log("Resim bulundu! Oynatılıyor...");
             video.play();
             audio.play();
         });
 
+        // Resim kameradan çıktığında
         imageTarget.addEventListener('targetLost', () => {
-            console.log("Resim kaybedildi.");
+            console.log("Resim kaybedildi! Durduruldu.");
             video.pause();
             audio.pause();
+        });
+
+        // Hata ayıklama için (MindAR dosyası yüklenmezse konsola yazar)
+        document.querySelector('a-scene').addEventListener('loaded', () => {
+            console.log("A-Frame Sahnesi Yüklendi");
         });
     </script>
 </body>
