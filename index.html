@@ -1,1 +1,85 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İstanbul'un Fethi AR</title>
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.1/dist/mindar-image-aframe.prod.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: sans-serif; background-color: #000; }
+        
+        /* MindAR'ın kendi yükleme ve tarama dairelerini zorla gizliyoruz */
+        .mindar-ui-loading, .mindar-ui-scanning, .mindar-ui-compatibility {
+            display: none !important;
+        }
 
+        /* Başlat Ekranı Tasarımı */
+        #ui-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 10000;
+        }
+        #startButton {
+            padding: 15px 40px; background-color: #d32f2f; color: #fff;
+            border: none; border-radius: 50px; font-size: 20px; font-weight: bold;
+            cursor: pointer; box-shadow: 0 5px 15px rgba(211, 47, 47, 0.4);
+        }
+        p { color: #fff; text-align: center; margin-top: 15px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div id="ui-container">
+        <button id="startButton">KAMERAYI AÇ VE BAŞLAT</button>
+        <p>Lütfen bekleyin ve kamerayı resme tutun.</p>
+    </div>
+
+    <a-scene 
+        mindar-image="imageTargetSrc: ./yeni_klasor/targets_1.mind; uiLoading: no; uiScanning: no;" 
+        embedded color-space="sRGB" 
+        renderer="colorManagement: true, physicallyCorrectLights" 
+        vr-mode-ui="enabled: false" 
+        device-orientation-permission-ui="enabled: false"
+        loading-screen="enabled: false">
+        
+        <a-assets>
+            <video id="fethiVideo" src="./yeni_klasor/video_2.mp4" preload="auto" loop crossorigin="anonymous" playsinline></video>
+            <audio id="fethiMuzik" src="./yeni_klasor/muzik.mp3" preload="auto" loop crossorigin="anonymous"></audio>
+        </a-assets>
+
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+        <a-entity mindar-image-target="targetIndex: 0" id="imageTarget">
+            <a-video src="#fethiVideo" position="0 0 0" height="1" width="1.6" rotation="0 0 0"></a-video>
+        </a-entity>
+    </a-scene>
+
+    <script>
+        const uiContainer = document.getElementById('ui-container');
+        const startButton = document.getElementById('startButton');
+        const video = document.getElementById('fethiVideo');
+        const audio = document.getElementById('fethiMuzik');
+        const imageTarget = document.getElementById('imageTarget');
+
+        startButton.addEventListener('click', () => {
+            uiContainer.style.display = 'none';
+            // Mobil tarayıcılar için ses ve video kilidini açıyoruz
+            video.play().then(() => { video.pause(); });
+            audio.play().then(() => { audio.pause(); });
+        });
+
+        imageTarget.addEventListener('targetFound', () => {
+            console.log("Resim bulundu!");
+            video.play();
+            audio.play();
+        });
+
+        imageTarget.addEventListener('targetLost', () => {
+            console.log("Resim kaybedildi.");
+            video.pause();
+            audio.pause();
+        });
+    </script>
+</body>
+</html>
